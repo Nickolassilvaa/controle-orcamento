@@ -17,12 +17,9 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     outDir: "dist",
-    assetsDir: "assets",
+    emptyOutDir: true,
     rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, "index.html"),
-      },
+      input: "./index.html", // Caminho relativo simples
     },
   },
-  base: "/", // Garante que os assets sejam carregados corretamente
 }));
