@@ -4,6 +4,7 @@ export interface User {
   id: string;
   email: string;
   password: string;
+  empresa: string;
 }
 
 export interface Cliente {
@@ -15,19 +16,6 @@ export interface Cliente {
   createdAt: string;
 }
 
-export interface TipoMaterial {
-  id: string;
-  nome: string;
-  descricao?: string;
-  createdAt: string;
-}
-
-export interface TipoArte {
-  id: string;
-  nome: string;
-  descricao?: string;
-  createdAt: string;
-}
 
 export interface Item {
   id: string;
@@ -58,18 +46,25 @@ export interface Produto {
 
 export type StatusOrcamento = 'orcamento' | 'em_andamento' | 'pago' | 'cancelado';
 
+export interface OrcamentoItem {
+  id: string;
+  produtoId: string;
+  quantidade: number;
+  valorUnitario: number;
+  valorTotal: number;
+  aprovado?: boolean; // Para aprovação parcial
+  quantidadeAprovada?: number; // Quantidade aprovada quando em aprovação parcial
+}
+
 export interface Orcamento {
   id: string;
   clienteId: string;
-  produtoId: string;
-  tipoMaterialId: string;
-  tipoArteId: string;
-  quantidade: number;
-  valorUnitario: number;
+  itens: OrcamentoItem[];
   valorTotal: number;
   status: StatusOrcamento;
   observacoes?: string;
   motivoCancelamento?: string;
+  prazoValidade: string; // Data de validade do orçamento
   createdAt: string;
   updatedAt: string;
 }

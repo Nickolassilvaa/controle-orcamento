@@ -1,64 +1,16 @@
 // Dados iniciais para demonstração do sistema
-import { 
-  clienteStorage, 
-  tipoMaterialStorage, 
-  tipoArteStorage, 
-  itemStorage, 
+import { Orcamento, Cliente, Item, Produto } from '@/types';
+import {
+  clienteStorage,
+  itemStorage,
   produtoStorage,
-  orcamentoStorage 
+  orcamentoStorage,
 } from './storage';
 
+// Sistema limpo - cache refresh
 export const seedInitialData = () => {
   // Verificar se já existem dados
   if (clienteStorage.getAll().length > 0) return;
-
-  // Tipos de Material
-  const tiposMaterial = [
-    {
-      id: '1',
-      nome: 'Papel Fotográfico',
-      descricao: 'Papel de alta qualidade para impressões fotográficas',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      nome: 'Canvas',
-      descricao: 'Tecido canvas para impressões artísticas',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: '3',
-      nome: 'Adesivo Vinil',
-      descricao: 'Adesivo vinílico para aplicações diversas',
-      createdAt: new Date().toISOString(),
-    },
-  ];
-
-  tiposMaterial.forEach(tipo => tipoMaterialStorage.save(tipo));
-
-  // Tipos de Arte
-  const tiposArte = [
-    {
-      id: '1',
-      nome: 'Sublimação',
-      descricao: 'Impressão por sublimação térmica',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      nome: 'Impressão Digital',
-      descricao: 'Impressão digital em alta resolução',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: '3',
-      nome: 'Corte Ploter',
-      descricao: 'Corte em vinil para adesivos',
-      createdAt: new Date().toISOString(),
-    },
-  ];
-
-  tiposArte.forEach(tipo => tipoArteStorage.save(tipo));
 
   // Itens/Materiais
   const itens = [
@@ -185,42 +137,57 @@ export const seedInitialData = () => {
     {
       id: '1',
       clienteId: '1',
-      produtoId: '1',
-      tipoMaterialId: '1',
-      tipoArteId: '1',
-      quantidade: 2,
-      valorUnitario: 25.00,
+      itens: [
+        {
+          id: 'item-1',
+          produtoId: '1',
+          quantidade: 2,
+          valorUnitario: 25.00,
+          valorTotal: 50.00,
+        }
+      ],
       valorTotal: 50.00,
       status: 'pago' as const,
       observacoes: 'Canecas com logo da empresa',
-      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 dias atrás
+      prazoValidade: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 dias a partir de hoje
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
       updatedAt: new Date().toISOString(),
     },
     {
       id: '2',
       clienteId: '2',
-      produtoId: '2',
-      tipoMaterialId: '3',
-      tipoArteId: '3',
-      quantidade: 10,
-      valorUnitario: 15.00,
+      itens: [
+        {
+          id: 'item-2',
+          produtoId: '2',
+          quantidade: 10,
+          valorUnitario: 15.00,
+          valorTotal: 150.00,
+        }
+      ],
       valorTotal: 150.00,
       status: 'em_andamento' as const,
       observacoes: 'Adesivos para decoração',
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 dias atrás
+      prazoValidade: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       updatedAt: new Date().toISOString(),
     },
     {
       id: '3',
       clienteId: '3',
-      produtoId: '3',
-      tipoMaterialId: '2',
-      tipoArteId: '2',
-      quantidade: 1,
-      valorUnitario: 80.00,
+      itens: [
+        {
+          id: 'item-3',
+          produtoId: '3',
+          quantidade: 1,
+          valorUnitario: 80.00,
+          valorTotal: 80.00,
+        }
+      ],
       valorTotal: 80.00,
       status: 'orcamento' as const,
       observacoes: 'Banner para evento corporativo',
+      prazoValidade: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },

@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -26,7 +26,7 @@ import {
   ShoppingCart
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { TooltipContent, TooltipProvider, TooltipTrigger, Tooltip } from './ui/tooltip';
 import { cn } from '@/lib/utils';
 
 const navigationItems = [
@@ -49,8 +49,8 @@ const cadastroItems = [
     icon: Package,
   },
   {
-    title: 'Materiais',
-    url: '/materiais',
+    title: 'Itens/Materiais',
+    url: '/itens',
     icon: Box,
   },
   {
@@ -58,22 +58,13 @@ const cadastroItems = [
     url: '/clientes',
     icon: Users,
   },
-  {
-    title: 'Tipos de Material',
-    url: '/tipos-material',
-    icon: Layers,
-  },
-  {
-    title: 'Tipos de Arte',
-    url: '/tipos-arte',
-    icon: Palette,
-  },
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, isMobile } = useSidebar();
   const { logout, user } = useAuth();
-  const collapsed = state === 'collapsed';
+  const location = useLocation();
+  const collapsed = state === 'collapsed' && !isMobile;
 
   return (
     <Sidebar collapsible="icon" className="min-w-16">
@@ -84,67 +75,65 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <div className="overflow-hidden">
-              <h2 className="font-bold text-lg truncate">Tapioca Com Limao</h2>
-              <p className="text-sm text-muted-foreground">MVP v1.0</p>
+              <h2 className="font-bold text-lg truncate">OrçaSystem</h2>
+              <p className="text-sm text-muted-foreground truncate">{user?.empresa || 'MVP v1.0'}</p>
             </div>
           )}
         </div>
       </SidebarHeader>
-        
+          
       <TooltipProvider>
         <SidebarContent>
           <SidebarGroup>
-              <SidebarGroupLabel>Principal</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu className={collapsed && 'flex items-center'}>
-                  {navigationItems.map((item) => (
+            <SidebarGroupLabel>Principal</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className={collapsed && 'flex items-center'}>
+                {navigationItems.map((item) => {
+                  const isActive = (item.url === '/' && location.pathname === '/') || 
+                                  (item.url !== '/' && location.pathname === item.url);
+                  return (
                     <SidebarMenuItem key={item.title}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <SidebarMenuButton asChild>
+                          <SidebarMenuButton asChild isActive={isActive}>
                               <NavLink
                                 to={item.url}
                                 end
-                                className={({ isActive }) =>
-                                  isActive
-                                    ? 'flex items-center gap-2 px-3 py-2 rounded-lg text-accent-foreground'
-                                    : 'flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground'
-                                }
+                                className="flex items-center gap-2"
                               >
-                              <item.icon className="h-4 w-4" />
-                              {!collapsed && <span>{item.title}</span>}
+                                <item.icon className={`h-4 w-4 ${collapsed ? 'mx-auto' : ''}`} />
+                                {!collapsed && <span>{item.title}</span>}
                             </NavLink>
                           </SidebarMenuButton>
                         </TooltipTrigger>
                         <TooltipContent side="right">
                           {item.title}
                         </TooltipContent>
-                      </Tooltip>
+                    </Tooltip>
                     </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
           </SidebarGroup>
-        
+
           <SidebarGroup>
             <SidebarGroupLabel>Cadastros</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className={collapsed && 'flex items-center'}>
-                {cadastroItems.map((item) => (
+                {cadastroItems.map((item) => {
+                  const isActive = location.pathname === item.url;
+                  return (
                     <SidebarMenuItem key={item.title}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <SidebarMenuButton asChild>
+                          <SidebarMenuButton asChild isActive={isActive}>
                               <NavLink
                                 to={item.url}
-                                className={({ isActive }) =>
-                                  isActive
-                                    ? 'flex items-center gap-2 px-3 py-2 rounded-lg text-accent-foreground'
-                                    : 'flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground'
-                                }
+                                className="flex items-center gap-2"
                               >
-                              <item.icon className="h-4 w-4" />
-                              {!collapsed && <span>{item.title}</span>}
+                                <item.icon className={`h-4 w-4 ${collapsed ? 'mx-auto' : ''}`} />
+                                {!collapsed && <span>{item.title}</span>}
                             </NavLink>
                           </SidebarMenuButton>
                         </TooltipTrigger>
@@ -153,13 +142,14 @@ export function AppSidebar() {
                         </TooltipContent>
                       </Tooltip>
                     </SidebarMenuItem>
-                ))}
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
       </TooltipProvider>
-
+    
       <SidebarFooter className="border-t p-4">
         {!collapsed && (
           <div className="space-y-2">

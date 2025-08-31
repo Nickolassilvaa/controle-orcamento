@@ -7,13 +7,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Box, AlertTriangle } from 'lucide-react';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Item } from '@/types';
 import { itemStorage } from '@/lib/storage';
-import { cn } from '@/lib/utils';
-import { useSidebar } from '@/components/ui/sidebar';
 
 const unidades = ['un', 'kg', 'g', 'L', 'ml', 'm', 'cm', 'mm', 'pç'];
 
@@ -23,9 +22,8 @@ const Itens = () => {
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
-  const { state } = useSidebar();
-  const collapsed = state === 'collapsed';
 
   const [formData, setFormData] = useState({
     nome: '',
@@ -127,7 +125,7 @@ const Itens = () => {
   };
 
   const getStatusEstoque = (item: Item) => {
-    if (item.estoque <= item.estoqueMinimo) {
+    if (item.estoque <= item.estoqueMinimo && item.estoqueMinimo > 0) {
       return { 
         status: 'Baixo', 
         color: 'destructive' as const,
@@ -149,10 +147,14 @@ const Itens = () => {
     }).format(value);
   };
 
-  const itensComAlerta = itens.filter(item => item.estoque <= item.estoqueMinimo);
+  const itensComAlerta = itens.filter(item => item.estoque <= item.estoqueMinimo && item.estoqueMinimo > 0);
+  
+  const filteredItens = itens.filter(item => 
+    item.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className={cn("p-6 space-y-6", collapsed && "pl-10")}>
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Itens/Materiais</h1>
@@ -167,7 +169,7 @@ const Itens = () => {
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
               <Plus className="h-4 w-4 mr-2" />
-              Novo Item
+              Novo
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -261,80 +263,117 @@ const Itens = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Box className="h-5 w-5" />
-            Lista de Itens ({itens.length})
+            Lista de Itens ({filteredItens.length})
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Estoque</TableHead>
-                <TableHead>Mínimo</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Custo Unit.</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {itens.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    Nenhum item cadastrado
-                  </TableCell>
-                </TableRow>
-              ) : (
-                itens.map((item) => {
-                  const statusEstoque = getStatusEstoque(item);
-                  return (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.nome}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Buscar por nome do item..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-sm"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredItens.map((item) => {
+              const statusEstoque = getStatusEstoque(item);
+              return (
+                <Card key={item.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Box className="h-5 w-5" />
+                      {item.nome}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Estoque:</span>
+                        <div className="flex items-center gap-1 mt-1">
                           <Input
                             type="number"
                             min="0"
                             value={item.estoque}
                             onChange={(e) => handleEstoqueUpdate(item.id, parseInt(e.target.value))}
-                            className="w-20"
+                            className="h-8 text-xs"
                           />
-                          <span className="text-sm text-muted-foreground">{item.unidade}</span>
+                          <span className="text-xs text-muted-foreground">{item.unidade}</span>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {item.estoqueMinimo} {item.unidade}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusEstoque.color} className="flex items-center gap-1 w-fit">
-                          {statusEstoque.icon && <statusEstoque.icon className="h-3 w-3" />}
-                          {statusEstoque.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{formatCurrency(item.custo)}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(item)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(item.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Mínimo:</span>
+                        <div className="mt-1">
+                          <span className="text-sm font-medium">
+                            {item.estoqueMinimo} {item.unidade}
+                          </span>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-muted-foreground text-sm">Status:</span>
+                        <div className="mt-1">
+                          <Badge variant={statusEstoque.color} className="flex items-center gap-1 w-fit">
+                            {statusEstoque.icon && <statusEstoque.icon className="h-3 w-3" />}
+                            {statusEstoque.status}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-muted-foreground text-sm">Custo:</span>
+                        <div className="mt-1 text-sm font-medium">
+                          {formatCurrency(item.custo)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex items-center justify-between">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(item)}
+                        className="hover:bg-blue-50 hover:border-blue-200"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(item.id)}
+                        className="hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {filteredItens.length === 0 && itens.length > 0 && (
+            <div className="text-center py-10">
+              <Box className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-semibold text-gray-900">Nenhum item encontrado</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Tente ajustar os filtros de busca.
+              </p>
+            </div>
+          )}
+
+          {itens.length === 0 && (
+            <div className="text-center py-10">
+              <Box className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-semibold text-gray-900">Nenhum item cadastrado</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Comece adicionando um novo item.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

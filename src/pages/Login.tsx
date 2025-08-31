@@ -11,6 +11,7 @@ import { Package } from 'lucide-react';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [empresa, setEmpresa] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -24,7 +25,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const success = login(email, password);
+      const success = login(email, password, empresa);
       if (success) {
         toast({
           title: "Login realizado com sucesso!",
@@ -33,7 +34,7 @@ const Login = () => {
       } else {
         toast({
           title: "Erro no login",
-          description: "Email ou senha incorretos.",
+          description: "Empresa não autorizada ou credenciais incorretas.",
           variant: "destructive",
         });
       }
@@ -65,6 +66,17 @@ const Login = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="empresa">Nome da Empresa</Label>
+              <Input
+                id="empresa"
+                type="text"
+                placeholder="Digite o nome da sua empresa"
+                value={empresa}
+                onChange={(e) => setEmpresa(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -92,6 +104,7 @@ const Login = () => {
           </form>
           <div className="mt-6 text-sm text-muted-foreground text-center">
             <p>Credenciais de teste:</p>
+            <p><strong>Empresa:</strong> nrdev</p>
             <p><strong>Email:</strong> teste@gmail.com</p>
             <p><strong>Senha:</strong> 12345678</p>
           </div>

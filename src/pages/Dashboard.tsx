@@ -16,12 +16,8 @@ import {
 } from 'lucide-react';
 import { DashboardMetrics, Orcamento, Produto, Item } from '@/types';
 import { orcamentoStorage, produtoStorage, itemStorage } from '@/lib/storage';
-import { useSidebar } from '@/components/ui/sidebar';
-import { cn } from '@/lib/utils';
 
 const Dashboard = () => {
-  const { state } = useSidebar();
-  const collapsed = state === 'collapsed';
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalFaturado: 0,
     aFaturar: 0,
@@ -60,11 +56,16 @@ const Dashboard = () => {
     orcamentos
       .filter(o => o.status === 'pago' || o.status === 'em_andamento')
       .forEach(o => {
-        const current = produtoVendas.get(o.produtoId) || { quantidade: 0, valor: 0 };
-        produtoVendas.set(o.produtoId, {
-          quantidade: current.quantidade + o.quantidade,
-          valor: current.valor + o.valorTotal,
-        });
+        // Verificar se o orçamento tem a nova estrutura com itens
+        if (o.itens && Array.isArray(o.itens)) {
+          o.itens.forEach(item => {
+            const current = produtoVendas.get(item.produtoId) || { quantidade: 0, valor: 0 };
+            produtoVendas.set(item.produtoId, {
+              quantidade: current.quantidade + item.quantidade,
+              valor: current.valor + item.valorTotal,
+            });
+          });
+        }
       });
 
     const produtosMaisVendidos = Array.from(produtoVendas.entries())
@@ -82,7 +83,7 @@ const Dashboard = () => {
 
     // Itens com estoque baixo
     const itensEstoqueBaixo = itens
-      .filter(item => item.estoque <= item.estoqueMinimo)
+      .filter(item => item.estoque <= item.estoqueMinimo && item.estoqueMinimo > 0)
       .map(item => ({
         item,
         percentualEstoque: item.estoqueMinimo > 0 
@@ -111,12 +112,17 @@ const Dashboard = () => {
     orcamentos
       .filter(o => o.status === 'pago' || o.status === 'em_andamento')
       .forEach(o => {
-        const produto = produtos.find(p => p.id === o.produtoId);
-        if (produto) {
-          produto.itensComposicao.forEach(composicao => {
-            const item = itens.find(i => i.id === composicao.itemId);
-            if (item) {
-              totalGastos += (item.custo || 0) * composicao.quantidade * o.quantidade;
+        // Verificar se o orçamento tem a nova estrutura com itens
+        if (o.itens && Array.isArray(o.itens)) {
+          o.itens.forEach(orcamentoItem => {
+            const produto = produtos.find(p => p.id === orcamentoItem.produtoId);
+            if (produto) {
+              produto.itensComposicao.forEach(composicao => {
+                const item = itens.find(i => i.id === composicao.itemId);
+                if (item) {
+                  totalGastos += (item.custo || 0) * composicao.quantidade * orcamentoItem.quantidade;
+                }
+              });
             }
           });
         }
@@ -154,7 +160,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className={cn("p-6 space-y-6", collapsed && "pl-10")}>
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <Button onClick={calculateMetrics} variant="outline">

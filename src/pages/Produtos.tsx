@@ -8,13 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Package, Eye } from 'lucide-react';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Produto, Item, ItemComposicao } from '@/types';
 import { produtoStorage, itemStorage } from '@/lib/storage';
-import { cn } from '@/lib/utils';
-import { useSidebar } from '@/components/ui/sidebar';
 
 const Produtos = () => {
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -23,9 +22,8 @@ const Produtos = () => {
   const [editingProduto, setEditingProduto] = useState<Produto | null>(null);
   const [showComposicaoDialog, setShowComposicaoDialog] = useState(false);
   const [selectedProdutoComposicao, setSelectedProdutoComposicao] = useState<Produto | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
-  const { state } = useSidebar();
-  const collapsed = state === 'collapsed';
 
   const [formData, setFormData] = useState({
     nome: '',
@@ -129,7 +127,6 @@ const Produtos = () => {
   };
 
   const updateItemComposicao = (index: number, field: keyof ItemComposicao, value: string | number) => {
-    console.log(index, field, value)
     const newComposicao = [...formData.itensComposicao];
     newComposicao[index] = { ...newComposicao[index], [field]: value };
     
@@ -166,8 +163,9 @@ const Produtos = () => {
 
   const getItemUnidade = (itemId: string) => {
     const item = itens.find(i => i.id === itemId);
-    return item?.unidade || '';
-  }
+    console.log(item)
+    return item?.unidade || 'un';
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -176,15 +174,20 @@ const Produtos = () => {
     }).format(value);
   };
 
+  const filteredProdutos = produtos.filter(produto => 
+    produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (produto.categoria && produto.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   return (
-    <div className={cn("p-6 space-y-6", collapsed && "pl-10")}>
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Produtos</h1>
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
               <Plus className="h-4 w-4 mr-2" />
-              Novo Produto
+              Novo
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -257,7 +260,7 @@ const Produtos = () => {
                         <SelectContent>
                           {itens.map((item) => (
                             <SelectItem key={item.id} value={item.id}>
-                              {item.nome} ({item.unidade})
+                              {item.nome} {item.unidade}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -302,51 +305,44 @@ const Produtos = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
-            Lista de Produtos ({produtos.length})
+            Lista de Produtos ({filteredProdutos.length})
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Composição</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {produtos.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    Nenhum produto cadastrado
-                  </TableCell>
-                </TableRow>
-              ) : (
-                produtos.map((produto) => (
-                  <TableRow key={produto.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{produto.nome}</p>
-                        {produto.descricao && (
-                          <p className="text-sm text-muted-foreground">{produto.descricao}</p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {produto.categoria ? (
-                        <Badge variant="secondary">{produto.categoria}</Badge>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium text-success">
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Buscar por nome ou categoria..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-sm"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProdutos.map((produto) => (
+              <Card key={produto.id} className="hover:shadow-lg transition-shadow flex flex-col">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    {produto.nome}
+                  </CardTitle>
+                  {produto.categoria && (
+                    <Badge variant="secondary">{produto.categoria}</Badge>
+                  )}
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col justify-between space-y-3">
+                  <div className="space-y-3">
+                    {produto.descricao && (
+                      <p className="text-sm text-muted-foreground">{produto.descricao}</p>
+                    )}
+                    
+                    <div className="text-lg font-semibold text-primary">
                       {formatCurrency(produto.valor)}
-                    </TableCell>
-                    <TableCell>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Composição:</span>
                       {produto.itensComposicao.length > 0 ? (
-                        <div>
+                        <div className="flex items-center gap-2">
                           <Badge variant="outline">
                             {produto.itensComposicao.length} {produto.itensComposicao.length === 1 ? 'item' : 'itens'}
                           </Badge>
@@ -364,30 +360,53 @@ const Produtos = () => {
                       ) : (
                         <span className="text-muted-foreground">Sem composição</span>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(produto)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(produto.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(produto)}
+                      className="hover:bg-blue-50 hover:border-blue-200"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(produto.id)}
+                      className="hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {filteredProdutos.length === 0 && produtos.length > 0 && (
+            <div className="text-center py-10">
+              <Package className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-semibold text-gray-900">Nenhum produto encontrado</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Tente ajustar os filtros de busca.
+              </p>
+            </div>
+          )}
+
+          {produtos.length === 0 && (
+            <div className="text-center py-10">
+              <Package className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-semibold text-gray-900">Nenhum produto cadastrado</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Comece adicionando um novo produto.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

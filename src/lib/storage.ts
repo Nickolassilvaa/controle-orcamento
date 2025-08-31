@@ -1,10 +1,8 @@
-import { Cliente, TipoMaterial, TipoArte, Item, Produto, Orcamento } from '@/types';
+import { Cliente, Item, Produto, Orcamento } from '@/types';
 
 // Chaves do localStorage
 const STORAGE_KEYS = {
   CLIENTES: 'app_clientes',
-  TIPOS_MATERIAL: 'app_tipos_material',
-  TIPOS_ARTE: 'app_tipos_arte',
   ITENS: 'app_itens',
   PRODUTOS: 'app_produtos',
   ORCAMENTOS: 'app_orcamentos',
@@ -44,43 +42,6 @@ export const clienteStorage = {
   getById: (id: string) => clienteStorage.getAll().find(c => c.id === id),
 };
 
-// Tipos de Material
-export const tipoMaterialStorage = {
-  getAll: (): TipoMaterial[] => getFromStorage(STORAGE_KEYS.TIPOS_MATERIAL),
-  save: (tipo: TipoMaterial) => {
-    const tipos = tipoMaterialStorage.getAll();
-    const index = tipos.findIndex(t => t.id === tipo.id);
-    if (index >= 0) {
-      tipos[index] = tipo;
-    } else {
-      tipos.push(tipo);
-    }
-    saveToStorage(STORAGE_KEYS.TIPOS_MATERIAL, tipos);
-  },
-  delete: (id: string) => {
-    const tipos = tipoMaterialStorage.getAll().filter(t => t.id !== id);
-    saveToStorage(STORAGE_KEYS.TIPOS_MATERIAL, tipos);
-  },
-};
-
-// Tipos de Arte
-export const tipoArteStorage = {
-  getAll: (): TipoArte[] => getFromStorage(STORAGE_KEYS.TIPOS_ARTE),
-  save: (tipo: TipoArte) => {
-    const tipos = tipoArteStorage.getAll();
-    const index = tipos.findIndex(t => t.id === tipo.id);
-    if (index >= 0) {
-      tipos[index] = tipo;
-    } else {
-      tipos.push(tipo);
-    }
-    saveToStorage(STORAGE_KEYS.TIPOS_ARTE, tipos);
-  },
-  delete: (id: string) => {
-    const tipos = tipoArteStorage.getAll().filter(t => t.id !== id);
-    saveToStorage(STORAGE_KEYS.TIPOS_ARTE, tipos);
-  },
-};
 
 // Itens
 export const itemStorage = {
